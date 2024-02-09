@@ -18,6 +18,10 @@ var movies []Movie
 
 var unknownMovie Movie = Movie{-1, "garbage", "garbage", &Director{"garbage", "garbage"}}
 
+func setMovies(newMovies []Movie) {
+	movies = newMovies
+}
+
 func GenerateMovieList() {
 	movies = append(movies, Movie{1, "123341", "The New Gig", &Director{"John", "Doe"}})
 	movies = append(movies, Movie{2, "123342", "Wrecmeister Harmonies", &Director{"Bela", "Tar"}})
@@ -74,4 +78,19 @@ func updateMovie(oldMovie Movie, newMovie Movie) {
 	oldMovie.Isbn = newMovie.Isbn
 	oldMovie.Title = newMovie.Title
 	oldMovie.Director = newMovie.Director
+}
+
+func RemoveMovie(id int) {
+	var removedMovies []Movie = removeMovieById(id)
+	setMovies(removedMovies)
+}
+
+func removeMovieById(id int) []Movie {
+	var newMovies []Movie
+	for _, movie := range movies {
+		if movie.Id != id {
+			newMovies = append(newMovies, movie)
+		}
+	}
+	return newMovies
 }
