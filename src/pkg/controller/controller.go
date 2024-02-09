@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 var movies []service.Movie
@@ -53,7 +55,19 @@ func processMovieById(w http.ResponseWriter, r *http.Request) {
 }
 
 func getMovieById(w http.ResponseWriter, r *http.Request) {
-
+	var urlPath string = r.URL.Path
+	var parameters []string = strings.Split(urlPath, "/")
+	var lastIndex int = len(parameters) - 1
+	var lastString string = parameters[lastIndex]
+	movieId, err := strconv.ParseInt(lastString, 10, 32)
+	if err != nil {
+		fmt.Fprint(w, "Integer value not present as last parameter")
+	}
+	movie, err := service.GetMovieById(int(movieId))
+	if err != nil {
+		fmt.Fprint(w, movieId, " :: not present in database")
+	}
+	json.NewEncoder(w).Encode(movie)
 }
 
 func createMovie(w http.ResponseWriter, r *http.Request) {
