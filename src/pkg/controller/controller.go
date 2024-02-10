@@ -6,15 +6,13 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 var movies []service.Movie
 
 func RegisterRestController(mux *http.ServeMux) {
 	mux.HandleFunc("/movies", getAllMovies)
-	mux.HandleFunc("/movie/id", processMovieById)
-	mux.HandleFunc("/movie", createMovie)
+	mux.HandleFunc("/movie", processMovieById)
 }
 
 type responseError struct {
@@ -49,17 +47,19 @@ func processMovieById(w http.ResponseWriter, r *http.Request) {
 		updateMovie(w, r)
 	case http.MethodDelete:
 		deleteMovie(w, r)
+	case http.MethodPost:
+		createMovie(w, r)
 	default:
 		responseError{w, "Wrong http verb used"}.writeError("")
 	}
 }
 
 func getMovieById(w http.ResponseWriter, r *http.Request) {
-	var urlPath string = r.URL.Path
-	var parameters []string = strings.Split(urlPath, "/")
-	var lastIndex int = len(parameters) - 1
-	var lastString string = parameters[lastIndex]
-	movieId, err := strconv.ParseInt(lastString, 10, 32)
+	var movieIdString string = r.URL.Query().Get("id")
+	// var parameters []string = strings.Split(urlPath, "/")
+	// var lastIndex int = len(parameters) - 1
+	// var lastString string = parameters[lastIndex]
+	movieId, err := strconv.ParseInt(movieIdString, 10, 32)
 	if err != nil {
 		fmt.Fprint(w, "Integer value not present as last parameter")
 	}
@@ -67,7 +67,9 @@ func getMovieById(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Fprint(w, movieId, " :: not present in database")
 	}
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(movie)
+
 }
 
 func createMovie(w http.ResponseWriter, r *http.Request) {
