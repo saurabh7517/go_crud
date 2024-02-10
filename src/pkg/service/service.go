@@ -10,8 +10,8 @@ type Movie struct {
 }
 
 type Director struct {
-	firstname string `json: "firstname"`
-	lastname  string `json: "lastname"`
+	Firstname string `json:"firstname"`
+	Lastname  string `json:"lastname"`
 }
 
 var movies []Movie
@@ -77,7 +77,8 @@ func updateMovie(oldMovie Movie, newMovie Movie) {
 	oldMovie.Id = newMovie.Id
 	oldMovie.Isbn = newMovie.Isbn
 	oldMovie.Title = newMovie.Title
-	oldMovie.Director = newMovie.Director
+	oldMovie.Director.Firstname = newMovie.Director.Firstname
+	oldMovie.Director.Lastname = newMovie.Director.Lastname
 }
 
 func RemoveMovie(id int) {
