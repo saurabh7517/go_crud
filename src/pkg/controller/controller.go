@@ -29,11 +29,24 @@ func (re responseError) writeError(errorMsg string) {
 	}
 }
 
+func writeResponse[T any](re http.ResponseWriter, movies T) {
+	re.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(re).Encode(movies)
+}
+
+func readRequest(r *http.Request) (service.Movie, error) {
+	var movie service.Movie
+	var err error = json.NewDecoder(r.Body).Decode(&movie)
+	if err != nil {
+		return movie, err
+	}
+	return movie, nil
+}
+
 func getAllMovies(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		w.Header().Set("Content-Type", "application/json")
 		var movies []service.Movie = service.GetAllMovies()
-		json.NewEncoder(w).Encode(movies)
+		writeResponse(w, movies)
 		return
 	}
 	responseError{w, "Wrong http verb used"}.writeError("")
@@ -56,9 +69,6 @@ func processMovieById(w http.ResponseWriter, r *http.Request) {
 
 func getMovieById(w http.ResponseWriter, r *http.Request) {
 	var movieIdString string = r.URL.Query().Get("id")
-	// var parameters []string = strings.Split(urlPath, "/")
-	// var lastIndex int = len(parameters) - 1
-	// var lastString string = parameters[lastIndex]
 	movieId, err := strconv.ParseInt(movieIdString, 10, 32)
 	if err != nil {
 		fmt.Fprint(w, "Integer value not present as last parameter")
@@ -67,23 +77,33 @@ func getMovieById(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Fprint(w, movieId, " :: not present in database")
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(movie)
-
+	writeResponse(w, movie)
 }
 
 func createMovie(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
+		movieDto, err := readRequest(r)
+		if err != nil {
+			responseError{w, "Error parsing body"}.writeError("")
+			return
+		}
+		var response service.Response = service.AddNewMovie(movieDto)
+		writeResponse(w, response)
 		return
-
 	}
 	responseError{w, "Wrong http verb used"}.writeError("")
 }
 
 func updateMovie(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPut {
+		movieDto, err := readRequest(r)
+		if err != nil {
+			responseError{w, "Error parsing body"}.writeError("")
+			return
+		}
+		var response service.Response = service.UpdateMovie(movieDto)
+		writeResponse(w, response)
 		return
-
 	}
 	responseError{w, "Wrong http verb used"}.writeError("")
 }
