@@ -1,6 +1,8 @@
 package service
 
-import "errors"
+import (
+	"errors"
+)
 
 type Movie struct {
 	Id       int       `json:"id"`
@@ -12,6 +14,10 @@ type Movie struct {
 type Director struct {
 	Firstname string `json:"firstname"`
 	Lastname  string `json:"lastname"`
+}
+
+type Response struct {
+	Msg string `json:"msg"`
 }
 
 var movies []Movie
@@ -55,11 +61,24 @@ func GetMovieById(id int) (Movie, error) {
 	return unknownMovie, errors.New("Not Found")
 }
 
-func AddNewMovie(newMovie Movie) {
+func AddNewMovie(newMovie Movie) Response {
+	var primaryKey int = createNewPrimaryKey()
+	newMovie.Id = primaryKey
 	movies = append(movies, newMovie)
+	return Response{"New movie added"}
 }
 
-func UpdateMovie(newMovie Movie) {
+func createNewPrimaryKey() int {
+	var max int = -1
+	for _, movie := range movies {
+		if movie.Id > max {
+			max = movie.Id
+		}
+	}
+	return max + 1
+}
+
+func UpdateMovie(newMovie Movie) Response {
 	var found bool = false
 	for _, movie := range movies {
 		if movie.Id == newMovie.Id {
@@ -70,7 +89,9 @@ func UpdateMovie(newMovie Movie) {
 	}
 	if !found {
 		AddNewMovie(newMovie)
+		return Response{"We could not find this movie in our database, so added this one for you !!"}
 	}
+	return Response{"We updated movie for you, Happy days !!"}
 }
 
 func updateMovie(oldMovie Movie, newMovie Movie) {
