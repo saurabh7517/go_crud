@@ -102,9 +102,10 @@ func updateMovie(oldMovie Movie, newMovie Movie) {
 	oldMovie.Director.Lastname = newMovie.Director.Lastname
 }
 
-func RemoveMovie(id int) {
+func RemoveMovie(id int) Response {
 	var removedMovies []Movie = removeMovieById(id)
 	setMovies(removedMovies)
+	return Response{"Movie removed"}
 }
 
 func removeMovieById(id int) []Movie {
