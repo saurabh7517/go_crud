@@ -20,13 +20,14 @@ type responseError struct {
 	errMsg    string
 }
 
-func (re responseError) writeError(errorMsg string) {
-	re.resWriter.WriteHeader(http.StatusMethodNotAllowed)
-	if errorMsg != "" {
-		fmt.Fprint(re.resWriter, errorMsg)
-	} else {
-		fmt.Fprint(re.resWriter, re.errMsg)
-	}
+type responseMsg struct {
+	msg  string
+	code int
+}
+
+func writeError(re http.ResponseWriter, errorMsg string) {
+	re.WriteHeader(http.StatusMethodNotAllowed)
+	json.NewEncoder(re).Encode(responseMsg{errorMsg, http.StatusMethodNotAllowed})
 }
 
 func writeResponse[T any](re http.ResponseWriter, movies T) {
@@ -49,7 +50,7 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 		writeResponse(w, movies)
 		return
 	}
-	responseError{w, "Wrong http verb used"}.writeError("")
+	writeError("Wrong http verb used")
 }
 
 func processMovieById(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +64,7 @@ func processMovieById(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		createMovie(w, r)
 	default:
-		responseError{w, "Wrong http verb used"}.writeError("")
+		writeError("Wrong http verb used")
 	}
 }
 
@@ -81,37 +82,38 @@ func getMovieById(w http.ResponseWriter, r *http.Request) {
 }
 
 func createMovie(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		movieDto, err := readRequest(r)
-		if err != nil {
-			responseError{w, "Error parsing body"}.writeError("")
-			return
-		}
-		var response service.Response = service.AddNewMovie(movieDto)
-		writeResponse(w, response)
+	movieDto, err := readRequest(r)
+	if err != nil {
+		responseError{w, "Error parsing body"}.writeError("")
 		return
 	}
-	responseError{w, "Wrong http verb used"}.writeError("")
+	var response service.Response = service.AddNewMovie(movieDto)
+	writeResponse(w, response)
 }
 
 func updateMovie(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPut {
-		movieDto, err := readRequest(r)
-		if err != nil {
-			responseError{w, "Error parsing body"}.writeError("")
-			return
-		}
-		var response service.Response = service.UpdateMovie(movieDto)
-		writeResponse(w, response)
+	movieDto, err := readRequest(r)
+	if err != nil {
+		responseError{w, "Error parsing body"}.writeError("")
 		return
 	}
-	responseError{w, "Wrong http verb used"}.writeError("")
+	var response service.Response = service.UpdateMovie(movieDto)
+	writeResponse(w, response)
 }
 
 func deleteMovie(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodDelete {
+	var movieIdString string = r.URL.Query().Get("id")
+	movieId, err := strconv.ParseInt(movieIdString, 10, 32)
+	if err != nil {
+		fmt.Fprint(w, "Integer value not present as last parameter")
 		return
-
 	}
-	responseError{w, "Wrong http verb used"}.writeError("")
+	movieToDelete, err := service.GetMovieById(int(movieId))
+	if err != nil {
+		errorMsg := fmt.Sprintf("Movie with id %v not presnet in database", movieId)
+		fmt.Fprint(w, errorMsg)
+		return
+	}
+	var response service.Response = service.RemoveMovie(movieToDelete.Id)
+	writeResponse(w, response)
 }
