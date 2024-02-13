@@ -78,7 +78,7 @@ func createNewPrimaryKey() int {
 	return max + 1
 }
 
-func UpdateMovie(newMovie Movie) Response {
+func UpdateMovie(newMovie Movie) bool {
 	var found bool = false
 	for _, movie := range movies {
 		if movie.Id == newMovie.Id {
@@ -89,9 +89,10 @@ func UpdateMovie(newMovie Movie) Response {
 	}
 	if !found {
 		AddNewMovie(newMovie)
-		return Response{"We could not find this movie in our database, so added this one for you !!"}
+		return true
+	} else {
+		return false
 	}
-	return Response{"We updated movie for you, Happy days !!"}
 }
 
 func updateMovie(oldMovie Movie, newMovie Movie) {
@@ -102,10 +103,10 @@ func updateMovie(oldMovie Movie, newMovie Movie) {
 	oldMovie.Director.Lastname = newMovie.Director.Lastname
 }
 
-func RemoveMovie(id int) Response {
+func RemoveMovie(id int) bool {
 	var removedMovies []Movie = removeMovieById(id)
 	setMovies(removedMovies)
-	return Response{"Movie removed"}
+	return true
 }
 
 func removeMovieById(id int) []Movie {
