@@ -50,7 +50,7 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 		writeResponse(w, movies)
 		return
 	}
-	writeError("Wrong http verb used")
+	writeError(w, "Wrong http verb used")
 }
 
 func processMovieById(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +64,7 @@ func processMovieById(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		createMovie(w, r)
 	default:
-		writeError("Wrong http verb used")
+		writeError(w, "Wrong http verb used")
 	}
 }
 
@@ -84,7 +84,7 @@ func getMovieById(w http.ResponseWriter, r *http.Request) {
 func createMovie(w http.ResponseWriter, r *http.Request) {
 	movieDto, err := readRequest(r)
 	if err != nil {
-		responseError{w, "Error parsing body"}.writeError("")
+		writeError(w, "Error parsing body")
 		return
 	}
 	var response service.Response = service.AddNewMovie(movieDto)
@@ -94,11 +94,14 @@ func createMovie(w http.ResponseWriter, r *http.Request) {
 func updateMovie(w http.ResponseWriter, r *http.Request) {
 	movieDto, err := readRequest(r)
 	if err != nil {
-		responseError{w, "Error parsing body"}.writeError("")
+		writeError(w, "Error parsing body")
 		return
 	}
-	var response service.Response = service.UpdateMovie(movieDto)
-	writeResponse(w, response)
+	if service.UpdateMovie(movieDto) {
+		writeResponse(w, "We could not find this movie in our database, so added this one for you !!")
+	} else {
+		writeResponse(w, "We updated movie for you, Happy days !!")
+	}
 }
 
 func deleteMovie(w http.ResponseWriter, r *http.Request) {
@@ -114,6 +117,6 @@ func deleteMovie(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, errorMsg)
 		return
 	}
-	var response service.Response = service.RemoveMovie(movieToDelete.Id)
-	writeResponse(w, response)
+	service.RemoveMovie(movieToDelete.Id)
+	writeResponse(w, "Movie removed")
 }
